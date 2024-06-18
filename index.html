@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<head>
+    <title>Integer Encodings</title>
+
+    <link rel="stylesheet" href="tachyons.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="templates.js"></script>
+</head>
+
+<body class="code">
+    <div class="pa3 flex justify-center">
+        <div class="w-site mw-100">
+            <h1>Integer Encodings</h1>
+            <input type="number" id="decimal" class="w-100" placeholder="Decimal number">
+            <div class="mv3 bb"></div>
+            <div>
+                <h2>64-bit little endian</h2>
+                <div id="le64"></div>
+            </div>
+            <div>
+                <h2>64-bit big endian</h2>
+                <div id="be64"></div>
+            </div>
+        </div>
+    </div>
+
+    <template id="byteRow">
+        <div data-tmpl="root" class="flex flex-row justify-between"></div>
+    </template>
+
+    <template id="byte">
+        <div data-tmpl="root" class="byte flex flex-column">
+            <div data-tmpl="hex" class="byte-hex">FF</div>
+            <div data-tmpl="caption" class="byte-caption f7"></div>
+        </div>
+    </template>
+
+    <script src="script.js"></script>
+</body>
