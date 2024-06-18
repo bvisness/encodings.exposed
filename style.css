@@ -1,3 +1,7 @@
+:root {
+    --bg-dim: #f0f0f0;
+}
+
 .w-site {
     width: 16rem;
 }
@@ -14,3 +18,24 @@ h2 {
     font-size: 1rem;
 }
 
+.byte {
+    position: relative;
+}
+
+.byte-input:not(.show) {
+    visibility: hidden;
+}
+
+.byte-input, .byte-hex:hover::after {
+    position: absolute;
+    top: -0.25rem;
+    left: -0.25rem;
+    right: -0.25rem;
+    bottom: -0.25rem;
+}
+
+.byte-hex:hover::after {
+    content: '';
+    background-color: var(--bg-dim);
+    z-index: -1;
+}
