@@ -23,7 +23,8 @@ h2 {
 }
 
 .byte-input:not(.show) {
-    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .byte-input, .byte-hex:hover::after {
