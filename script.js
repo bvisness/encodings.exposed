@@ -2,6 +2,7 @@ const decimalInput = document.querySelector("#decimal");
 const le64 = document.querySelector("#le64");
 const be64 = document.querySelector("#be64");
 const uleb128 = document.querySelector("#uleb128");
+const sleb128 = document.querySelector("#sleb128");
 
 const byte = makeTemplateCloner("byte");
 const byteRow = makeTemplateCloner("byteRow");
@@ -21,7 +22,7 @@ function makebyte(onchange) {
         let val = input.value;
         if (val.match(/^[0-9a-fA-F]*$/)) {
             const n = fromhex(val);
-            display.innerText = hex(n);
+            display.innerText = tohex(n);
         }
         input.classList.remove("show");
     });
@@ -66,6 +67,17 @@ function makebyte(onchange) {
         uleb128.appendChild(row.root);
     }
 }
+// init sleb128
+{
+    for (let i = 0; i < 2; i++) {
+        const row = byteRow();
+        for (let i = 0; i < 8; i++) {
+            const b = makebyte(updateFromSLEB128);
+            row.root.appendChild(b.root);
+        }
+        sleb128.appendChild(row.root);
+    }
+}
 
 function update(num) {
     decimalInput.value = num.toString();
@@ -75,7 +87,14 @@ function update(num) {
         const byteEls = Array.from(le64.querySelectorAll(".byte"));
         const bytes = encodeLE64(num);
         for (let i = 0; i < 8; i++) {
-            byteEls[i].querySelector(".byte-hex").innerText = hex(bytes[i]);
+            const el = byteEls[i];
+            const hex = el.querySelector(".byte-hex");
+            const tooltip = el.querySelector(".byte-tooltip");
+
+            hex.innerText = tohex(bytes[i]);
+            for (let index = 7; index >= 0; index--) {
+                tooltip.appendChild(Bit(bytes[i], index));
+            }
         }
     }
     // Update be64
@@ -83,7 +102,14 @@ function update(num) {
         const byteEls = Array.from(be64.querySelectorAll(".byte"));
         const bytes = encodeBE64(num);
         for (let i = 0; i < 8; i++) {
-            byteEls[i].querySelector(".byte-hex").innerText = hex(bytes[i]);
+            const el = byteEls[i];
+            const hex = el.querySelector(".byte-hex");
+            const tooltip = el.querySelector(".byte-tooltip");
+
+            hex.innerText = tohex(bytes[i]);
+            for (let index = 7; index >= 0; index--) {
+                tooltip.appendChild(Bit(bytes[i], index));
+            }
         }
     }
     // Update uleb128
@@ -91,55 +117,60 @@ function update(num) {
         const byteEls = Array.from(uleb128.querySelectorAll(".byte"));
         const bytes = encodeULEB128(num);
         for (let i = 0; i < byteEls.length; i++) {
-            byteEls[i].querySelector(".byte-hex").innerText = hex(bytes[i] ?? 0);
+            const el = byteEls[i];
+            const hex = el.querySelector(".byte-hex");
+            const tooltip = el.querySelector(".byte-tooltip");
+
+            hex.innerText = tohex(bytes[i] ?? 0);
+            el.classList.toggle("unused", i >= bytes.length);
+
+            tooltip.appendChild(E("span", ["pr2"], Bit(bytes[i], 7)));
+            for (let index = 6; index >= 0; index--) {
+                tooltip.appendChild(Bit(bytes[i], index));
+            }
+        }
+    }
+    // Update sleb128
+    {
+        const byteEls = Array.from(sleb128.querySelectorAll(".byte"));
+        const bytes = encodeSLEB128(num);
+        for (let i = 0; i < byteEls.length; i++) {
+            const el = byteEls[i];
+            const hex = el.querySelector(".byte-hex");
+            const tooltip = el.querySelector(".byte-tooltip");
+
+            hex.innerText = tohex(bytes[i] ?? 0);
+            el.classList.toggle("unused", i >= bytes.length);
+
+            tooltip.appendChild(E("span", ["pr2"], Bit(bytes[i], 7)));
+            for (let index = 6; index >= 0; index--) {
+                tooltip.appendChild(Bit(bytes[i], index));
+            }
         }
     }
 }
 
 function updateFromLE64() {
     const bytes = getBytes(le64);
-    const n = (
-        (BigInt(bytes[0]) << 0n)
-        + (BigInt(bytes[1]) << 8n)
-        + (BigInt(bytes[2]) << 16n)
-        + (BigInt(bytes[3]) << 24n)
-        + (BigInt(bytes[4]) << 32n)
-        + (BigInt(bytes[5]) << 40n)
-        + (BigInt(bytes[6]) << 48n)
-        + (BigInt(bytes[7]) << 56n)
-    );
+    const n = decodeLE64(bytes);
     update(n);
 }
 
 function updateFromBE64() {
     const bytes = getBytes(be64);
-    const n = (
-        (BigInt(bytes[0]) << 56n)
-        + (BigInt(bytes[1]) << 48n)
-        + (BigInt(bytes[2]) << 40n)
-        + (BigInt(bytes[3]) << 32n)
-        + (BigInt(bytes[4]) << 24n)
-        + (BigInt(bytes[5]) << 16n)
-        + (BigInt(bytes[6]) << 8n)
-        + (BigInt(bytes[7]) << 0n)
-    );
+    const n = decodeBE64(bytes);
     update(n);
 }
 
 function updateFromULEB128() {
     const bytes = getBytes(uleb128);
-    const bigBytes = bytes.map(b => BigInt(b));
+    const n = decodeULEB128(bytes);
+    update(n);
+}
 
-    let n = 0n;
-    let shift = 0n;
-    for (const byte of bigBytes) {
-        n |= (byte & 0x7Fn) << shift;
-        if ((byte & 0x80n) === 0n) {
-            break;
-        }
-        shift += 7n;
-    }
-
+function updateFromSLEB128() {
+    const bytes = getBytes(sleb128);
+    const n = decodeSLEB128(bytes);
     update(n);
 }
 
@@ -162,6 +193,19 @@ function encodeLE64(num) {
     ];
 }
 
+function decodeLE64(bytes) {
+    return (
+        (BigInt(bytes[0]) << 0n)
+        + (BigInt(bytes[1]) << 8n)
+        + (BigInt(bytes[2]) << 16n)
+        + (BigInt(bytes[3]) << 24n)
+        + (BigInt(bytes[4]) << 32n)
+        + (BigInt(bytes[5]) << 40n)
+        + (BigInt(bytes[6]) << 48n)
+        + (BigInt(bytes[7]) << 56n)
+    );
+}
+
 function encodeBE64(num) {
     // TODO: handle signed numbers
     return [
@@ -176,7 +220,24 @@ function encodeBE64(num) {
     ];
 }
 
+function decodeBE64(bytes) {
+    return (
+        (BigInt(bytes[0]) << 56n)
+        + (BigInt(bytes[1]) << 48n)
+        + (BigInt(bytes[2]) << 40n)
+        + (BigInt(bytes[3]) << 32n)
+        + (BigInt(bytes[4]) << 24n)
+        + (BigInt(bytes[5]) << 16n)
+        + (BigInt(bytes[6]) << 8n)
+        + (BigInt(bytes[7]) << 0n)
+    );
+}
+
 function encodeULEB128(num) {
+    if (num < 0) {
+        return [];
+    }
+
     const result = [];
     do {
         let byte = num & 0x7Fn;
@@ -189,12 +250,69 @@ function encodeULEB128(num) {
     return result;
 }
 
+function decodeULEB128(bytes) {
+    const bigBytes = bytes.map(b => BigInt(b));
+
+    let n = 0n;
+    let shift = 0n;
+    for (const byte of bigBytes) {
+        n |= (byte & 0x7Fn) << shift;
+        if ((byte & 0x80n) === 0n) {
+            break;
+        }
+        shift += 7n;
+    }
+
+    return n;
+}
+
+function encodeSLEB128(num) {
+    const result = [];
+
+    for (let i = 0; i < 100; i++) {
+        let byte = num & 0x7Fn;
+        num >>= 7n;
+
+        if (
+            (num === 0n && (byte & 0x40n) === 0n)
+            || (num === -1n && (byte & 0x40n) !== 0n)
+        ) {
+            result.push(Number(byte));
+            return result;
+        }
+        result.push(Number(byte |= 0x80n));
+    }
+
+    throw new Error(`infinite loop when encoding SLEB128 ${num}`);
+}
+
+function decodeSLEB128(bytes) {
+    const bigBytes = bytes.map(b => BigInt(b));
+
+    let n = 0n;
+    let shift = 0n;
+    let numBytes = 0;
+    for (const byte of bigBytes) {
+        n |= (byte & 0x7Fn << shift);
+        shift += 7n;
+        numBytes += 1;
+
+        if ((byte & 0x80n) === 0n) {
+            break;
+        }
+    }
+
+    console.log("decode sleb", bytes, n, numBytes);
+
+    return BigInt.asIntN(numBytes * 7, n);
+}
+
 decimalInput.addEventListener("input", () => {
     update(BigInt(decimalInput.value));
 });
 update(BigInt(decimalInput.value));
 
-function hex(n) {
+function tohex(n) {
     const cl = "0123456789abcdef"[(n>>0)&0xF];
     const ch = "0123456789abcdef"[(n>>4)&0xF];
     return `${ch}${cl}`;
@@ -228,4 +346,8 @@ function editbyte(e, type) {
     e.preventDefault();
     const byte = e.target.closest(".byte");
     console.log(byte);
+}
+
+function Bit(num, index) {
+    return E("span", [], [(num & (1 << index)) ? "1" : "0"]);
 }

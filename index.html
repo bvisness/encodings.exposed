@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="tachyons.min.css">
     <link rel="stylesheet" href="style.css">
 
+    <script src="dom.js"></script>
     <script src="templates.js"></script>
 </head>
 
@@ -23,8 +24,12 @@
                 <div id="be64"></div>
             </div>
             <div>
-                <h2>ULEB128</h2>
+                <h2>Unsigned LEB128</h2>
                 <div id="uleb128"></div>
+            </div>
+            <div>
+                <h2>Signed LEB128</h2>
+                <div id="sleb128"></div>
             </div>
         </div>
     </div>
@@ -35,7 +40,7 @@
 
     <template id="byte">
         <div data-tmpl="root" class="byte flex flex-column">
-            <div data-tmpl="hex" class="byte-hex">??</div>
+            <div data-tmpl="display" class="byte-display"><span class="byte-hex">??</span><div data-tmpl="tooltip" class="byte-tooltip"></div></div>
             <div data-tmpl="caption" class="byte-caption f7"></div>
             <input class="byte-input" maxlength="2" pattern="^[0-9a-fA-F]*$">
         </div>

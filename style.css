@@ -22,12 +22,16 @@ h2 {
     position: relative;
 }
 
+.byte.unused .byte-hex {
+    opacity: 0.5;
+}
+
 .byte-input:not(.show) {
     opacity: 0;
     pointer-events: none;
 }
 
-.byte-input, .byte-hex:hover::after {
+.byte-input, .byte-display:hover::after {
     position: absolute;
     top: -0.25rem;
     left: -0.25rem;
@@ -35,8 +39,38 @@ h2 {
     bottom: -0.25rem;
 }
 
-.byte-hex:hover::after {
+.byte-display {
+    position: relative;
+}
+
+.byte-display:hover::after {
     content: '';
     background-color: var(--bg-dim);
     z-index: -1;
+}
+
+.byte-tooltip {
+    position: absolute;
+    top: 2rem;
+    left: -0.25rem;
+    background-color: var(--bg-dim);
+    padding: 0.25rem;
+    z-index: 1;
+}
+
+.byte-tooltip::after {
+    --size: 0.5rem;
+
+    content: '';
+    border-width: 0 var(--size) var(--size);
+    border-style: solid;
+    border-color: transparent transparent var(--bg-dim);
+    position: absolute;
+    top: calc(-1 * var(--size));
+    left: 0.35rem;
+
+}
+
+.byte-display:not(:hover) .byte-tooltip {
+    display: none;
 }
