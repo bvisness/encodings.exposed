@@ -68,9 +68,12 @@ h2 {
     position: absolute;
     top: calc(-1 * var(--size));
     left: 0.35rem;
-
 }
 
 .byte-display:not(:hover) .byte-tooltip {
+    display: none;
+}
+
+.leb-preview:empty {
     display: none;
 }

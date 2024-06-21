@@ -66,6 +66,7 @@ function makebyte(onchange) {
         }
         uleb128.appendChild(row.root);
     }
+    uleb128.appendChild(E("div", ["leb-preview", "pt3"]));
 }
 // init sleb128
 {
@@ -77,6 +78,7 @@ function makebyte(onchange) {
         }
         sleb128.appendChild(row.root);
     }
+    sleb128.appendChild(E("div", ["leb-preview", "pt3"]));
 }
 
 function update(num) {
@@ -91,6 +93,7 @@ function update(num) {
             const hex = el.querySelector(".byte-hex");
             const tooltip = el.querySelector(".byte-tooltip");
 
+            tooltip.innerHTML = "";
             hex.innerText = tohex(bytes[i]);
             for (let index = 7; index >= 0; index--) {
                 tooltip.appendChild(Bit(bytes[i], index));
@@ -106,6 +109,7 @@ function update(num) {
             const hex = el.querySelector(".byte-hex");
             const tooltip = el.querySelector(".byte-tooltip");
 
+            tooltip.innerHTML = "";
             hex.innerText = tohex(bytes[i]);
             for (let index = 7; index >= 0; index--) {
                 tooltip.appendChild(Bit(bytes[i], index));
@@ -124,9 +128,19 @@ function update(num) {
             hex.innerText = tohex(bytes[i] ?? 0);
             el.classList.toggle("unused", i >= bytes.length);
 
+            tooltip.innerHTML = "";
             tooltip.appendChild(E("span", ["pr2"], Bit(bytes[i], 7)));
             for (let index = 6; index >= 0; index--) {
                 tooltip.appendChild(Bit(bytes[i], index));
+            }
+        }
+
+        const preview = uleb128.querySelector(".leb-preview");
+        const contentBytes = bytes.map(b => b & 0x7F);
+        preview.innerHTML = "";
+        for (let i = contentBytes.length - 1; i >= 0; i--) {
+            for (let bi = 6; bi >= 0; bi--) {
+                preview.appendChild(F([Bit(contentBytes[i], bi), "\u200b"]));
             }
         }
     }
@@ -142,9 +156,19 @@ function update(num) {
             hex.innerText = tohex(bytes[i] ?? 0);
             el.classList.toggle("unused", i >= bytes.length);
 
+            tooltip.innerHTML = "";
             tooltip.appendChild(E("span", ["pr2"], Bit(bytes[i], 7)));
             for (let index = 6; index >= 0; index--) {
                 tooltip.appendChild(Bit(bytes[i], index));
+            }
+        }
+
+        const preview = sleb128.querySelector(".leb-preview");
+        const contentBytes = bytes.map(b => b & 0x7F);
+        preview.innerHTML = "";
+        for (let i = contentBytes.length - 1; i >= 0; i--) {
+            for (let bi = 6; bi >= 0; bi--) {
+                preview.appendChild(F([Bit(contentBytes[i], bi), "\u200b"]));
             }
         }
     }
@@ -293,7 +317,7 @@ function decodeSLEB128(bytes) {
     let shift = 0n;
     let numBytes = 0;
     for (const byte of bigBytes) {
-        n |= (byte & 0x7Fn << shift);
+        n |= ((byte & 0x7Fn) << shift);
         shift += 7n;
         numBytes += 1;
 
@@ -301,8 +325,6 @@ function decodeSLEB128(bytes) {
             break;
         }
     }
-
-    console.log("decode sleb", bytes, n, numBytes);
 
     return BigInt.asIntN(numBytes * 7, n);
 }
